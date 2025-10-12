@@ -1,4 +1,4 @@
-Extending [RuleArena](https://github.com/SkyRiver-2000/RuleArena/tree/main) tax benchmarks with Lean validator. 
+Extending [RuleArena](https://github.com/SkyRiver-2000/RuleArena/tree/main) tax benchmarks with Lean validator. Apart from the Lean rules and its processing code, other code are from [RuleArena tax](https://github.com/SkyRiver-2000/RuleArena/tree/main/tax)  directory.  
 
 # Running
 * Make sure `lean` (v 4.23) is in your path
