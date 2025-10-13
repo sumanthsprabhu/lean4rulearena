@@ -14,6 +14,7 @@ from prompt import (
 import openai
 from python_evaluation import compute_actual_answer
 from lean_evaluation import analyze_response
+import numpy as np
 
 query_system_prompt = "You are a helpful US taxation consultant."
 
@@ -30,12 +31,11 @@ Your response:
 
 tbd_mark = "[__]"
 
-#TODO: replace with llm supported
-def o1(inputs, system_prompt):
+def llm(inputs, system_prompt):
     api_key = os.environ["OPENAI_API_KEY"]
     engine = openai.OpenAI(api_key=api_key)
     response = engine.chat.completions.create(
-        model="o1-preview",
+        model="gpt-4o-2024-08-06",
         messages=[
             {"role": "user", "content": system_prompt + "\n\n" + inputs}
         ],
@@ -97,9 +97,10 @@ def load_problems(number_problems):
     return filtered
 
 def eval_query(tax_payer, tax_payer_pydantic):
+    acc = False
     prompt = build_query_prompt(tax_payer)
 
-    response = o1(prompt, query_system_prompt) #TODO: check which LLM to use
+    response = llm(prompt, query_system_prompt)
     response = response.replace("**", "")
 
     pattern = r"The total tax (owed|overpaid) is \$((?:\d{1,3}(?:,\d{3})*|\d+)(\.\d+)?)."
@@ -121,7 +122,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--number_problems", type=int, default=5)
-    parser.add_argument("--test_lean", type=bool, default=True)
+    parser.add_argument("--test_lean", action='store_true')
     args = parser.parse_args()
     
     problems = load_problems(args.number_problems)
@@ -133,15 +134,17 @@ if __name__ == "__main__":
     for i in range(args.number_problems):
         tax_payer, tax_payer_pydantic = problems[i]["dict"], TaxPayer(**problems[i]["pydantic"])
         if not args.test_lean:
+            print("Querying LLM to fill form")
             response, acc = eval_query(tax_payer, tax_payer_pydantic)
             if acc:
                 total_acc += 1
             ratios, structured_response = analyze_response(response, tax_payer, tax_payer_pydantic)
             problem_wise_recall.append(ratios["recall"])
             problem_wise_precision.append(ratios["precision"])
-            print(f"Total accuracy: {total_acc}, Average recall: {sum(problem_wise_recall)/args.number_problems}, Average precision: {sum(problem_wise_precision)/args.number_problems}")
+            print(f"Acc: {acc}, Recall: {ratios['recall']}, Precision: {ratios['precision']}")
         else:
             ratios, _ = analyze_response("", tax_payer, tax_payer_pydantic)
             print(ratios)
             
 
+print(f"Total accuracy: {total_acc}, Average recall: {sum(problem_wise_recall)/args.number_problems}, Average precision: {sum(problem_wise_precision)/args.number_problems}")

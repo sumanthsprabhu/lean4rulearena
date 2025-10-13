@@ -391,7 +391,7 @@ def rule910 (structured_output : Form1040) : String :=
     else 
       "Error: itemized deductions"
   else
-    if approx_eq structured_output.standard_or_itemized_deductions computed_standardized_deduction then
+    if approx_eq structured_output.standard_or_itemized_deductions computed_standardized_deduction then 
       "Correct: standard deductions"
     else if approx_eq structured_output.standard_or_itemized_deductions 0 then
       "Missing: standard deductions"
@@ -426,7 +426,7 @@ partial def tax_table_helper (taxable_income : Float) (cut : List Float) (rate :
   match cut, rate with
   | c1::c2::cs, r::rs =>
     if taxable_income >= c1 then
-      let arg1 := mymin taxable_income (c2 - c1) 
+      let arg1 := (mymin taxable_income c2) - c1
       arg1 * r + tax_table_helper taxable_income (c2::cs) rs
     else 0.0
   | _, _ => 0.0
@@ -461,8 +461,9 @@ def calc_tax (taxable_income : Float) (filing_status : FilingStatus) : Float :=
 
 def rule13 (structured_output : Form1040) : String :=
   let computed_taxes := calc_tax structured_output.computed_taxable_income structured_output.filing_status
-  if approx_eq computed_taxes structured_output.taxes then
-    "Correct: standard taxes"
+  -- difference of 10.0 is ok
+  if approx_eq computed_taxes structured_output.taxes 10.0 then
+    s!"Correct: standard taxes {computed_taxes} {structured_output.taxes}"
   else if approx_eq structured_output.taxes 0 then
     "Missing: standard taxes"
   else 

@@ -16,6 +16,7 @@ from prompt import (
 from structured_forms import Form1040, TaxPayer, Student, FilingStatus
 import tempfile
 from python_evaluation import compute_actual_answer
+import openai
 
 formalize_system_prompt = "You are a helpful US taxation consultant an expert at structured data extraction. You are given a tax payer's information and a LLM's response to fill out the 1040 form step-by-step according to the information provided. You should convert the unstructured LLM response into the given structure."
 
@@ -132,6 +133,7 @@ def build_prompt(tax_payer: dict, response: str):
     return prompt
 
 def parse(tax_payer: dict, inputs: str):
+    print("Querying LLM for structured output")
     api_key = os.environ["OPENAI_API_KEY"]
     prompt = build_prompt(tax_payer, inputs)
     engine = openai.OpenAI(api_key=api_key)
@@ -226,8 +228,8 @@ def get_lean_check_code(structured_output):
 
 def analyze_response(response: str, tax_payer: dict, tax_payer_pydantic: TaxPayer):
     if response == "":#to test lean
-        _,structured_output = compute_actual_answer(tax_payer_pydantic)
-        structured_output = model_from_existing(structured_output, Form1040)
+        _,tax_payer_output = compute_actual_answer(tax_payer_pydantic)
+        structured_output = model_from_existing(tax_payer_output, Form1040)
     else:
         structured_output = parse(tax_payer, response)
 
